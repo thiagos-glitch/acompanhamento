@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volumetria | Acesso Restrito</title>
+    <title>Volumetria | Dashboard</title>
     <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Ícones -->
@@ -36,56 +36,9 @@
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- =========================
-         TELA DE LOGIN (SEM FORMULÁRIO PARA EVITAR ERROS)
+         CONTEÚDO DO DASHBOARD (Acesso Direto)
     ========================== -->
-    <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 fade-in text-center relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-            
-            <div class="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 text-2xl shadow-sm">
-                <i class="fa-solid fa-lock"></i>
-            </div>
-            
-            <h2 class="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
-            <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar.</p>
-            
-            <!-- Usamos DIV em vez de FORM para garantir que o Enter não recarregue a página -->
-            <div class="space-y-4 text-left" id="loginBox">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Usuário</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <!-- onkeydown detecta o Enter manualmente -->
-                        <input type="text" id="username" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Usuário">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Senha</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="password" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="••••••">
-                    </div>
-                </div>
-
-                <div id="loginError" class="hidden text-red-500 text-xs text-center font-medium bg-red-50 p-2 rounded-lg border border-red-100">
-                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Dados incorretos.
-                </div>
-
-                <!-- Botão type="button" para não submeter nada nativamente -->
-                <button type="button" onclick="executeLogin()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
-                    Entrar <i class="fa-solid fa-arrow-right ml-2"></i>
-                </button>
-            </div>
-            
-            <p class="mt-6 text-xs text-slate-400">Digital Growth &copy; 2025</p>
-        </div>
-    </div>
-
-    <!-- =========================
-         CONTEÚDO DO DASHBOARD (Oculto até logar)
-    ========================== -->
-    <div id="appContent" class="hidden h-full flex flex-col">
+    <div id="appContent" class="h-full flex flex-col">
         <!-- Navbar -->
         <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 z-20 shadow-sm flex-shrink-0">
             <div class="flex items-center gap-6">
@@ -120,11 +73,6 @@
                     <i class="fa-solid fa-gear"></i>
                 </button>
                 
-                <!-- Botão de Sair -->
-                <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition" title="Sair do Sistema">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                </button>
-
                 <div id="loadingIndicator" class="hidden">
                     <div class="loader"></div>
                 </div>
@@ -259,51 +207,9 @@
         let metasData = [];
         let logData = [];
         
-        // --- SISTEMA DE LOGIN MANUAL (SEM FORM) ---
-        
-        // Detectar ENTER nos campos
-        function handleEnter(e) {
-            if (e.key === 'Enter') {
-                executeLogin();
-            }
-        }
-
-        // Login Direto
-        function executeLogin() {
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            const err = document.getElementById('loginError');
-
-            // --- CREDENCIAIS NOVAS AQUI ---
-            if (u === 'dg' && p === 'dg123') {
-                localStorage.setItem('isLoggedIn', 'true');
-                showDashboard();
-            } else {
-                err.classList.remove('hidden');
-                const box = document.getElementById('loginBox');
-                box.classList.add('animate-pulse');
-                setTimeout(() => box.classList.remove('animate-pulse'), 500);
-            }
-        }
-
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            location.reload();
-        }
-
-        function showDashboard() {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('appContent').classList.remove('hidden');
-            initDashboard();
-        }
-
         // Inicialização
         window.onload = function() {
-            const isLogged = localStorage.getItem('isLoggedIn');
-            if (isLogged === 'true') {
-                showDashboard();
-            }
-            // Caso contrário, fica no login
+            initDashboard();
         };
 
         // --- DASHBOARD LOGIC ---
