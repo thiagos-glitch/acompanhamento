@@ -36,7 +36,7 @@
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- =========================
-         TELA DE LOGIN (SEM FORMULÁRIO)
+         TELA DE LOGIN (SEM FORMULÁRIO PARA EVITAR ERROS)
     ========================== -->
     <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 fade-in text-center relative overflow-hidden">
@@ -47,16 +47,16 @@
             </div>
             
             <h2 class="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
-            <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar o dashboard.</p>
+            <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar.</p>
             
-            <!-- Mudamos para DIV para impedir qualquer comportamento de submit padrão -->
+            <!-- Usamos DIV em vez de FORM para garantir que o Enter não recarregue a página -->
             <div class="space-y-4 text-left" id="loginBox">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Usuário</label>
                     <div class="relative">
                         <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <!-- Detecta Enter manualmente -->
-                        <input type="text" id="username" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="admin">
+                        <!-- onkeydown detecta o Enter manualmente -->
+                        <input type="text" id="username" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Usuário">
                     </div>
                 </div>
                 
@@ -64,16 +64,15 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Senha</label>
                     <div class="relative">
                         <i class="fa-solid fa-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <!-- Detecta Enter manualmente -->
                         <input type="password" id="password" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="••••••">
                     </div>
                 </div>
 
                 <div id="loginError" class="hidden text-red-500 text-xs text-center font-medium bg-red-50 p-2 rounded-lg border border-red-100">
-                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Usuário ou senha incorretos.
+                    <i class="fa-solid fa-circle-exclamation mr-1"></i> Dados incorretos.
                 </div>
 
-                <!-- Botão comum, não é submit -->
+                <!-- Botão type="button" para não submeter nada nativamente -->
                 <button type="button" onclick="executeLogin()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
                     Entrar <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
@@ -84,7 +83,7 @@
     </div>
 
     <!-- =========================
-         CONTEÚDO DO DASHBOARD (Escondido)
+         CONTEÚDO DO DASHBOARD (Oculto até logar)
     ========================== -->
     <div id="appContent" class="hidden h-full flex flex-col">
         <!-- Navbar -->
@@ -121,8 +120,8 @@
                     <i class="fa-solid fa-gear"></i>
                 </button>
                 
-                <!-- Logout -->
-                <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition" title="Sair">
+                <!-- Botão de Sair -->
+                <button onclick="logout()" class="p-2 text-slate-400 hover:text-red-500 transition" title="Sair do Sistema">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 </button>
 
@@ -262,26 +261,25 @@
         
         // --- SISTEMA DE LOGIN MANUAL (SEM FORM) ---
         
-        // Função para detectar ENTER nos campos
+        // Detectar ENTER nos campos
         function handleEnter(e) {
             if (e.key === 'Enter') {
                 executeLogin();
             }
         }
 
-        // Função de Login Direta
+        // Login Direto
         function executeLogin() {
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value.trim();
             const err = document.getElementById('loginError');
 
-            // Validação
-            if (u === 'admin' && p === 'dg1234') {
+            // --- CREDENCIAIS NOVAS AQUI ---
+            if (u === 'dg' && p === 'dg123') {
                 localStorage.setItem('isLoggedIn', 'true');
                 showDashboard();
             } else {
                 err.classList.remove('hidden');
-                // Animação de erro
                 const box = document.getElementById('loginBox');
                 box.classList.add('animate-pulse');
                 setTimeout(() => box.classList.remove('animate-pulse'), 500);
@@ -305,7 +303,7 @@
             if (isLogged === 'true') {
                 showDashboard();
             }
-            // Caso contrário, fica na tela de login esperando o usuário
+            // Caso contrário, fica no login
         };
 
         // --- DASHBOARD LOGIC ---
