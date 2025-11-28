@@ -36,7 +36,7 @@
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- =========================
-         TELA DE LOGIN (FIXED)
+         TELA DE LOGIN (SEM FORMULÁRIO)
     ========================== -->
     <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 fade-in text-center relative overflow-hidden">
@@ -49,13 +49,14 @@
             <h2 class="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
             <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar o dashboard.</p>
             
-            <!-- FORMULÁRIO CORRIGIDO: O "onsubmit" bloqueia o reload e chama o login -->
-            <form class="space-y-4 text-left" onsubmit="event.preventDefault(); attemptLogin();">
+            <!-- Mudamos para DIV para impedir qualquer comportamento de submit padrão -->
+            <div class="space-y-4 text-left" id="loginBox">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Usuário</label>
                     <div class="relative">
                         <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="username" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Seu usuário" required>
+                        <!-- Detecta Enter manualmente -->
+                        <input type="text" id="username" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="admin">
                     </div>
                 </div>
                 
@@ -63,7 +64,8 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Senha</label>
                     <div class="relative">
                         <i class="fa-solid fa-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Sua senha" required>
+                        <!-- Detecta Enter manualmente -->
+                        <input type="password" id="password" onkeydown="handleEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="••••••">
                     </div>
                 </div>
 
@@ -71,10 +73,11 @@
                     <i class="fa-solid fa-circle-exclamation mr-1"></i> Usuário ou senha incorretos.
                 </div>
 
-                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
+                <!-- Botão comum, não é submit -->
+                <button type="button" onclick="executeLogin()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
                     Entrar <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
-            </form>
+            </div>
             
             <p class="mt-6 text-xs text-slate-400">Digital Growth &copy; 2025</p>
         </div>
@@ -257,23 +260,31 @@
         let metasData = [];
         let logData = [];
         
-        // LOGIN LOGIC (SIMPLIFICADO E ROBUSTO)
-        function attemptLogin() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
+        // --- SISTEMA DE LOGIN MANUAL (SEM FORM) ---
+        
+        // Função para detectar ENTER nos campos
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                executeLogin();
+            }
+        }
+
+        // Função de Login Direta
+        function executeLogin() {
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value.trim();
             const err = document.getElementById('loginError');
 
+            // Validação
             if (u === 'admin' && p === 'dg1234') {
-                // Sucesso
                 localStorage.setItem('isLoggedIn', 'true');
                 showDashboard();
             } else {
-                // Erro
                 err.classList.remove('hidden');
-                // Treme o formulário
-                const form = document.querySelector('form');
-                form.classList.add('animate-pulse');
-                setTimeout(() => form.classList.remove('animate-pulse'), 500);
+                // Animação de erro
+                const box = document.getElementById('loginBox');
+                box.classList.add('animate-pulse');
+                setTimeout(() => box.classList.remove('animate-pulse'), 500);
             }
         }
 
@@ -297,15 +308,15 @@
             // Caso contrário, fica na tela de login esperando o usuário
         };
 
+        // --- DASHBOARD LOGIC ---
         function initDashboard() {
             console.log("Dashboard Iniciado 🚀");
             updateMonthDisplay();
             
-            if(LINK_FIXO_METAS && LINK_FIXO_METAS.length > 10) {
+            if(LINK_FIXO_METAS.length > 10) {
                 fetchData(LINK_FIXO_METAS, LINK_FIXO_LOG);
             } else {
-                const sM = localStorage.getItem('urlMetas');
-                const sL = localStorage.getItem('urlLog');
+                const sM = localStorage.getItem('urlMetas'), sL = localStorage.getItem('urlLog');
                 if(sM && sL) {
                     document.getElementById('urlMetasInput').value = sM;
                     document.getElementById('urlLogInput').value = sL;
@@ -316,123 +327,85 @@
             }
         }
 
-        // --- Funções do Dashboard (iguais V3) ---
-        function changeMonth(delta) {
-            currentDate.setMonth(currentDate.getMonth() + delta);
-            updateMonthDisplay();
-            renderDashboard();
-        }
-
-        function updateMonthDisplay() {
-            const options = { month: 'long', year: 'numeric' };
-            const dateStr = new Intl.DateTimeFormat('pt-BR', options).format(currentDate);
-            document.getElementById('currentMonthDisplay').innerText = dateStr;
-        }
-
+        function changeMonth(delta) { currentDate.setMonth(currentDate.getMonth() + delta); updateMonthDisplay(); renderDashboard(); }
+        function updateMonthDisplay() { document.getElementById('currentMonthDisplay').innerText = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(currentDate); }
         function openConfig() { document.getElementById('configModal').classList.remove('hidden'); }
         function closeConfig() { document.getElementById('configModal').classList.add('hidden'); }
         
         function saveAndLoad() {
             const u1 = document.getElementById('urlMetasInput').value;
             const u2 = document.getElementById('urlLogInput').value;
-            if(!u1 || !u2) return alert("Preencha os dois links.");
-            localStorage.setItem('urlMetas', u1);
-            localStorage.setItem('urlLog', u2);
-            fetchData(u1, u2);
-            closeConfig();
+            if(!u1 || !u2) return alert("Preencha links.");
+            localStorage.setItem('urlMetas', u1); localStorage.setItem('urlLog', u2);
+            fetchData(u1, u2); closeConfig();
         }
 
         function fetchData(url1, url2) {
             document.getElementById('loadingIndicator').classList.remove('hidden');
             let loadedCount = 0;
             const checkDone = () => { loadedCount++; if(loadedCount === 2) { document.getElementById('loadingIndicator').classList.add('hidden'); renderDashboard(); } };
-
-            Papa.parse(url1, { download: true, header: true, skipEmptyLines: true, complete: (res) => { metasData = res.data; checkDone(); }, error: (err) => { alert("Erro Metas: " + err); checkDone(); }});
-            Papa.parse(url2, { download: true, header: true, skipEmptyLines: true, complete: (res) => { logData = res.data; checkDone(); }, error: (err) => { alert("Erro Log: " + err); checkDone(); }});
+            Papa.parse(url1, { download: true, header: true, skipEmptyLines: true, complete: (res) => { metasData = res.data; checkDone(); }, error: (err) => { alert("Erro: " + err); checkDone(); }});
+            Papa.parse(url2, { download: true, header: true, skipEmptyLines: true, complete: (res) => { logData = res.data; checkDone(); }, error: (err) => { alert("Erro: " + err); checkDone(); }});
         }
 
         function renderDashboard() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
-            
-            if(!metasData.length) {
-                document.getElementById('emptyState').classList.remove('hidden');
-                return;
-            }
+            const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+            if(!metasData.length) { document.getElementById('emptyState').classList.remove('hidden'); return; }
 
-            // Stats Mês Atual
             const currentMonthStats = {};
-            const targetMonth = currentDate.getMonth();
-            const targetYear = currentDate.getFullYear();
+            const tM = currentDate.getMonth(), tY = currentDate.getFullYear();
 
             logData.forEach(row => {
-                let dString = row['Data Criação'] || row['Data'] || "";
-                let itemDate = new Date(dString);
-                if(isNaN(itemDate.getTime()) && !isNaN(dString)) itemDate = new Date(parseInt(dString));
-
-                if(!isNaN(itemDate.getTime())) {
-                    if(itemDate.getMonth() === targetMonth && itemDate.getFullYear() === targetYear) {
-                        const client = (row['Nome do Cliente'] || "").trim();
-                        const type = (row['Tipo de Entrega'] || "").trim();
-                        const qty = parseInt(row['Qtd']) || 1;
-
-                        if(!currentMonthStats[client]) currentMonthStats[client] = { social: 0, perf: 0 };
-                        if(type.toLowerCase().includes('social')) currentMonthStats[client].social += qty;
-                        else if(type.toLowerCase().includes('performance')) currentMonthStats[client].perf += qty;
-                    }
+                let dStr = row['Data Criação'] || row['Data'] || "", iDate = new Date(dStr);
+                if(isNaN(iDate.getTime()) && !isNaN(dStr)) iDate = new Date(parseInt(dStr));
+                if(!isNaN(iDate.getTime()) && iDate.getMonth()===tM && iDate.getFullYear()===tY) {
+                    const c = (row['Nome do Cliente']||"").trim(), t = (row['Tipo de Entrega']||"").trim(), q = parseInt(row['Qtd'])||1;
+                    if(!currentMonthStats[c]) currentMonthStats[c] = { social: 0, perf: 0 };
+                    if(t.toLowerCase().includes('social')) currentMonthStats[c].social += q;
+                    else if(t.toLowerCase().includes('performance')) currentMonthStats[c].perf += q;
                 }
             });
 
-            // Cruzar e Renderizar
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            let kpiTotal=0, kpiRisk=0, kpiSD=0, kpiSM=0, kpiPD=0, kpiPM=0, hasData=false;
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let kT=0, kR=0, kSD=0, kSM=0, kPD=0, kPM=0, hasData=false;
 
             metasData.forEach(meta => {
-                const client = (meta['Nome do Cliente'] || "").trim();
-                if(!client) return;
-                if(searchTerm && !client.toLowerCase().includes(searchTerm)) return;
-
-                hasData = true; kpiTotal++;
-                const mS = parseInt(meta['Meta Social Media']) || 0;
-                const mP = parseInt(meta['Meta Performance']) || 0;
-                const stats = currentMonthStats[client] || { social: 0, perf: 0 };
-                const gapS = mS - stats.social;
-                const gapP = mP - stats.perf;
-
-                kpiSD += stats.social; kpiSM += mS; kpiPD += stats.perf; kpiPM += mP;
-                const isRisk = (gapS > 0 && mS > 0) || (gapP > 0 && mP > 0);
-                if(isRisk) kpiRisk++;
+                const c = (meta['Nome do Cliente']||"").trim();
+                if(!c || (search && !c.toLowerCase().includes(search))) return;
+                hasData = true; kT++;
+                const mS = parseInt(meta['Meta Social Media'])||0, mP = parseInt(meta['Meta Performance'])||0;
+                const st = currentMonthStats[c] || { social: 0, perf: 0 };
+                const gS = mS - st.social, gP = mP - st.perf;
+                kSD+=st.social; kSM+=mS; kPD+=st.perf; kPM+=mP;
+                if((gS>0 && mS>0) || (gP>0 && mP>0)) kR++;
 
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-50 group";
-                
                 tr.innerHTML = `
                     <td class="p-4 pl-6 sticky left-0 bg-white group-hover:bg-slate-50 z-20 font-medium text-slate-700 flex items-center gap-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] border-r border-slate-100">
-                        <span class="w-2.5 h-2.5 rounded-full ${isRisk ? 'bg-red-500 animate-pulse' : 'bg-green-500'}"></span>
-                        <span class="truncate max-w-[180px]" title="${client}">${client}</span>
+                        <span class="w-2.5 h-2.5 rounded-full ${((gS>0 && mS>0) || (gP>0 && mP>0)) ? 'bg-red-500 animate-pulse' : 'bg-green-500'}"></span>
+                        <span class="truncate max-w-[180px]" title="${c}">${c}</span>
                     </td>
                     <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mS}</td>
-                    <td class="p-2 text-center px-4">${renderBar(stats.social, mS, gapS)}</td>
-                    <td class="p-2 text-center font-bold ${gapS>0 ? 'text-red-500' : 'text-emerald-500'}">${gapS > 0 ? '-' + gapS : '<i class="fa-solid fa-check"></i>'}</td>
+                    <td class="p-2 text-center px-4">${renderBar(st.social, mS, gS)}</td>
+                    <td class="p-2 text-center font-bold ${gS>0?'text-red-500':'text-emerald-500'}">${gS>0?'-'+gS:'<i class="fa-solid fa-check"></i>'}</td>
                     <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mP}</td>
-                    <td class="p-2 text-center px-4">${renderBar(stats.perf, mP, gapP)}</td>
-                    <td class="p-2 text-center font-bold ${gapP>0 ? 'text-red-500' : 'text-emerald-500'}">${gapP > 0 ? '-' + gapP : '<i class="fa-solid fa-check"></i>'}</td>
+                    <td class="p-2 text-center px-4">${renderBar(st.perf, mP, gP)}</td>
+                    <td class="p-2 text-center font-bold ${gP>0?'text-red-500':'text-emerald-500'}">${gP>0?'-'+gP:'<i class="fa-solid fa-check"></i>'}</td>
                 `;
                 tbody.appendChild(tr);
             });
 
-            document.getElementById('kpiTotalClients').innerText = kpiTotal;
-            document.getElementById('kpiRisk').innerText = kpiRisk;
-            document.getElementById('kpiSocialDone').innerText = kpiSD; document.getElementById('kpiSocialMeta').innerText = kpiSM;
-            document.getElementById('kpiPerfDone').innerText = kpiPD; document.getElementById('kpiPerfMeta').innerText = kpiPM;
+            document.getElementById('kpiTotalClients').innerText = kT; document.getElementById('kpiRisk').innerText = kR;
+            document.getElementById('kpiSocialDone').innerText = kSD; document.getElementById('kpiSocialMeta').innerText = kSM;
+            document.getElementById('kpiPerfDone').innerText = kPD; document.getElementById('kpiPerfMeta').innerText = kPM;
             document.getElementById('emptyState').className = hasData ? 'hidden' : 'absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/80 z-0';
         }
 
         function renderBar(val, max, gap) {
-            if(max === 0) return '<span class="text-xs text-slate-300">-</span>';
-            const pct = Math.min((val / max) * 100, 100);
-            const colorClass = gap > 0 ? 'bg-amber-400' : 'bg-emerald-500';
-            return <div class="w-full flex flex-col items-center"><div class="w-full flex justify-between text-[10px] text-slate-400 mb-1 px-1"><span class="font-bold text-slate-600">${val}</span><span>${Math.round(pct)}%</span></div><div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${colorClass} transition-all duration-500 ease-out" style="width: ${pct}%"></div></div></div>;
+            if(max===0) return '<span class="text-xs text-slate-300">-</span>';
+            const pct = Math.min((val/max)*100, 100);
+            return <div class="w-full flex flex-col items-center"><div class="w-full flex justify-between text-[10px] text-slate-400 mb-1 px-1"><span class="font-bold text-slate-600">${val}</span><span>${Math.round(pct)}%</span></div><div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full ${gap>0?'bg-amber-400':'bg-emerald-500'} transition-all duration-500" style="width: ${pct}%"></div></div></div>;
         }
     </script>
 </body>
