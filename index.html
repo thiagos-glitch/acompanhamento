@@ -36,11 +36,10 @@
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
     <!-- =========================
-         TELA DE LOGIN
+         TELA DE LOGIN (FIXED)
     ========================== -->
     <div id="loginScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 fade-in text-center relative overflow-hidden">
-            <!-- Detalhe decorativo -->
             <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
             
             <div class="mb-6 inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-50 text-indigo-600 text-2xl shadow-sm">
@@ -48,14 +47,16 @@
             </div>
             
             <h2 class="text-2xl font-bold text-slate-800 mb-2">Acesso Restrito</h2>
-            <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar o dashboard de volumetria.</p>
+            <p class="text-sm text-slate-500 mb-6">Digite suas credenciais para visualizar o dashboard.</p>
             
-            <form onsubmit="handleLogin(event)" class="space-y-4 text-left">
+            <!-- Mudamos de FORM para DIV para evitar reload automático -->
+            <div class="space-y-4 text-left" id="loginFormContainer">
                 <div>
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Usuário</label>
                     <div class="relative">
                         <i class="fa-solid fa-user absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" id="username" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Seu usuário" required>
+                        <!-- Adicionado onkeypress para detectar Enter -->
+                        <input type="text" id="username" onkeypress="checkEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Seu usuário">
                     </div>
                 </div>
                 
@@ -63,7 +64,8 @@
                     <label class="block text-xs font-bold text-slate-500 uppercase mb-1 ml-1">Senha</label>
                     <div class="relative">
                         <i class="fa-solid fa-key absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="password" id="password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Sua senha" required>
+                        <!-- Adicionado onkeypress para detectar Enter -->
+                        <input type="password" id="password" onkeypress="checkEnter(event)" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" placeholder="Sua senha">
                     </div>
                 </div>
 
@@ -71,10 +73,11 @@
                     <i class="fa-solid fa-circle-exclamation mr-1"></i> Usuário ou senha incorretos.
                 </div>
 
-                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
+                <!-- Alterado para type="button" e onclick direto -->
+                <button type="button" onclick="attemptLogin()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition transform active:scale-95">
                     Entrar <i class="fa-solid fa-arrow-right ml-2"></i>
                 </button>
-            </form>
+            </div>
             
             <p class="mt-6 text-xs text-slate-400">Digital Growth &copy; 2025</p>
         </div>
@@ -243,10 +246,10 @@
     <!-- JAVASCRIPT -->
     <script>
         // =================================================================
-        // ÁREA DE CONFIGURAÇÃO FIXA (Edite aqui para o Vercel)
+        // ÁREA DE CONFIGURAÇÃO FIXA
         // =================================================================
         
-        // Links CSV (Aba BD_Metas e Log_Robo)
+        // COLE SEUS LINKS AQUI (dentro das aspas) PARA SALVAR!
         const LINK_FIXO_METAS = "https://docs.google.com/spreadsheets/d/1IrWfGQDcHoOK7RQBQBi-Ob1gJTnZ4FNPnMndJZZBFfg/export?format=csv&gid=0";
         const LINK_FIXO_LOG = "https://docs.google.com/spreadsheets/d/1IrWfGQDcHoOK7RQBQBi-Ob1gJTnZ4FNPnMndJZZBFfg/export?format=csv&gid=1358808453";
 
@@ -257,9 +260,14 @@
         let metasData = [];
         let logData = [];
         
-        // LOGIN LOGIC
-        function handleLogin(e) {
-            e.preventDefault();
+        // LOGIN LOGIC (FIXED)
+        function checkEnter(e) {
+            if (e.key === 'Enter') {
+                attemptLogin();
+            }
+        }
+
+        function attemptLogin() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
             const err = document.getElementById('loginError');
@@ -271,10 +279,10 @@
             } else {
                 // Erro
                 err.classList.remove('hidden');
-                // Treme o form
-                const form = document.querySelector('form');
-                form.classList.add('animate-pulse');
-                setTimeout(() => form.classList.remove('animate-pulse'), 500);
+                // Treme o container
+                const container = document.getElementById('loginFormContainer');
+                container.classList.add('animate-pulse');
+                setTimeout(() => container.classList.remove('animate-pulse'), 500);
             }
         }
 
@@ -295,7 +303,7 @@
             if (isLogged === 'true') {
                 showDashboard();
             }
-            // Caso contrário, fica na tela de login
+            // Caso contrário, fica na tela de login esperando o usuário
         };
 
         function initDashboard() {
