@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volumetria | Dashboard</title>
-    
-    <!-- CARREGAMENTO DE BIBLIOTECAS -->
+    <!-- Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Ícones -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- PapaParse (Leitor de CSV) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     
     <style>
@@ -47,7 +48,7 @@
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
                 <span id="currentMonthDisplay" class="w-36 text-center font-semibold text-sm text-slate-700 select-none uppercase tracking-wide">
-                    INICIANDO...
+                    ...
                 </span>
                 <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-white hover:text-indigo-600 rounded-md transition cursor-pointer">
                     <i class="fa-solid fa-chevron-right"></i>
@@ -70,12 +71,6 @@
             </div>
         </div>
     </header>
-
-    <!-- Aviso de Erro (Escondido) -->
-    <div id="errorBanner" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-6 mb-0 rounded shadow-sm" role="alert">
-        <p class="font-bold">Erro de Carregamento</p>
-        <p id="errorMessage">Algo deu errado.</p>
-    </div>
 
     <!-- Content -->
     <main class="flex-1 flex flex-col overflow-hidden p-6 gap-6">
@@ -190,64 +185,42 @@
     <!-- JAVASCRIPT -->
     <script>
         // =================================================================
-        // ÁREA DE CONFIGURAÇÃO FIXA
+        // ÁREA DE CONFIGURAÇÃO FIXA (JÁ CONECTADO!)
         // =================================================================
         
-        // COLE SEUS LINKS AQUI (dentro das aspas) PARA SALVAR!
-        const LINK_FIXO_METAS = "https://docs.google.com/spreadsheets/d/1IrWfGQDcHoOK7RQBQBi-Ob1gJTnZ4FNPnMndJZZBFfg/export?format=csv&gid=0";
-        const LINK_FIXO_LOG = "https://docs.google.com/spreadsheets/d/1IrWfGQDcHoOK7RQBQBi-Ob1gJTnZ4FNPnMndJZZBFfg/export?format=csv&gid=1358808453";
+        // Link 1 (Aba BD_Metas)
+        const LINK_FIXO_METAS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuLl6VziE_iHqU2DqgonSt8bssqMLXwIC-vhsZzp9zS1DzKhgnqmpQp-wVAzRQOD1Xi6BLhygEH7dj/pub?gid=0&single=true&output=csv";
+        
+        // Link 2 (Aba Log_Robo)
+        const LINK_FIXO_LOG = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTuLl6VziE_iHqU2DqgonSt8bssqMLXwIC-vhsZzp9zS1DzKhgnqmpQp-wVAzRQOD1Xi6BLhygEH7dj/pub?gid=1941915966&single=true&output=csv";
 
         // =================================================================
 
-        // Estado Global
         let currentDate = new Date();
-        let metasData = [];
-        let logData = [];
+        let metasData = [], logData = [];
         
-        // Inicialização
-        window.addEventListener('load', function() {
-            try {
-                console.log("Dashboard Iniciado 🚀");
-                
-                // Verificação de segurança: PapaParse carregou?
-                if (typeof Papa === 'undefined') {
-                    showError("A biblioteca PapaParse não carregou. Verifique sua conexão com a internet.");
-                    return;
-                }
+        window.onload = function() { initDashboard(); };
 
-                updateMonthDisplay();
-                
-                if(LINK_FIXO_METAS && LINK_FIXO_METAS.length > 10) {
-                    fetchData(LINK_FIXO_METAS, LINK_FIXO_LOG);
-                } else {
-                    const sM = localStorage.getItem('urlMetas');
-                    const sL = localStorage.getItem('urlLog');
-                    if(sM && sL) {
-                        document.getElementById('urlMetasInput').value = sM;
-                        document.getElementById('urlLogInput').value = sL;
-                        fetchData(sM, sL);
-                    } else {
-                        openConfig();
-                    }
-                }
-            } catch (e) {
-                showError("Erro crítico na inicialização: " + e.message);
-            }
-        });
-
-        // --- DASHBOARD LOGIC ---
-        function changeMonth(delta) {
-            currentDate.setMonth(currentDate.getMonth() + delta);
+        function initDashboard() {
             updateMonthDisplay();
-            renderDashboard();
+            // Verifica se os links fixos estão presentes
+            if(LINK_FIXO_METAS.length > 10) {
+                fetchData(LINK_FIXO_METAS, LINK_FIXO_LOG);
+            } else {
+                // Se não, tenta pegar do armazenamento local
+                const sM = localStorage.getItem('urlMetas'), sL = localStorage.getItem('urlLog');
+                if(sM && sL) {
+                    document.getElementById('urlMetasInput').value = sM;
+                    document.getElementById('urlLogInput').value = sL;
+                    fetchData(sM, sL);
+                } else {
+                    openConfig();
+                }
+            }
         }
 
-        function updateMonthDisplay() {
-            const options = { month: 'long', year: 'numeric' };
-            const dateStr = new Intl.DateTimeFormat('pt-BR', options).format(currentDate);
-            document.getElementById('currentMonthDisplay').innerText = dateStr.toUpperCase();
-        }
-
+        function changeMonth(delta) { currentDate.setMonth(currentDate.getMonth() + delta); updateMonthDisplay(); renderDashboard(); }
+        function updateMonthDisplay() { document.getElementById('currentMonthDisplay').innerText = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(currentDate).toUpperCase(); }
         function openConfig() { document.getElementById('configModal').classList.remove('hidden'); }
         function closeConfig() { document.getElementById('configModal').classList.add('hidden'); }
         
@@ -259,117 +232,69 @@
             fetchData(u1, u2); closeConfig();
         }
 
-        function showError(msg) {
-            document.getElementById('errorBanner').classList.remove('hidden');
-            document.getElementById('errorMessage').innerText = msg;
-        }
-
         function fetchData(url1, url2) {
             document.getElementById('loadingIndicator').classList.remove('hidden');
             let loadedCount = 0;
             const checkDone = () => { loadedCount++; if(loadedCount === 2) { document.getElementById('loadingIndicator').classList.add('hidden'); renderDashboard(); } };
-
-            // Configuração robusta do PapaParse
-            const papaConfig = {
-                download: true,
-                header: true,
-                skipEmptyLines: true,
-                complete: (res) => { 
-                    console.log("CSV Carregado", res);
-                    if(res.data.length === 0) console.warn("CSV Veio Vazio");
-                    return checkDone(); 
-                },
-                error: (err) => { 
-                    console.error("Erro CSV", err);
-                    showError("Erro ao baixar planilha: " + err); 
-                    checkDone(); 
-                }
-            };
-
-            Papa.parse(url1, { ...papaConfig, complete: (res) => { metasData = res.data; checkDone(); } });
-            Papa.parse(url2, { ...papaConfig, complete: (res) => { logData = res.data; checkDone(); } });
+            Papa.parse(url1, { download: true, header: true, skipEmptyLines: true, complete: (res) => { metasData = res.data; checkDone(); }, error: (err) => { alert("Erro: " + err); checkDone(); }});
+            Papa.parse(url2, { download: true, header: true, skipEmptyLines: true, complete: (res) => { logData = res.data; checkDone(); }, error: (err) => { alert("Erro: " + err); checkDone(); }});
         }
 
         function renderDashboard() {
-            try {
-                const tbody = document.getElementById('tableBody'); 
-                tbody.innerHTML = '';
-                
-                if(!metasData || metasData.length === 0) { 
-                    document.getElementById('emptyState').classList.remove('hidden'); 
-                    return; 
+            const tbody = document.getElementById('tableBody'); tbody.innerHTML = '';
+            if(!metasData.length) { document.getElementById('emptyState').classList.remove('hidden'); return; }
+
+            const currentMonthStats = {};
+            const tM = currentDate.getMonth(), tY = currentDate.getFullYear();
+
+            logData.forEach(row => {
+                let dStr = row['Data Criação'] || row['Data'] || "";
+                let iDate = new Date(dStr);
+                // Tenta corrigir datas que o Excel manda como número
+                if(isNaN(iDate.getTime()) && !isNaN(dStr)) iDate = new Date(parseInt(dStr));
+
+                if(!isNaN(iDate.getTime()) && iDate.getMonth()===tM && iDate.getFullYear()===tY) {
+                    const c = (row['Nome do Cliente']||"").trim(), t = (row['Tipo de Entrega']||"").trim(), q = parseInt(row['Qtd'])||1;
+                    if(!currentMonthStats[c]) currentMonthStats[c] = { social: 0, perf: 0 };
+                    if(t.toLowerCase().includes('social')) currentMonthStats[c].social += q;
+                    else if(t.toLowerCase().includes('performance')) currentMonthStats[c].perf += q;
                 }
+            });
 
-                // Stats Mês Atual
-                const currentMonthStats = {};
-                const tM = currentDate.getMonth();
-                const tY = currentDate.getFullYear();
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let kT=0, kR=0, kSD=0, kSM=0, kPD=0, kPM=0, hasData=false;
 
-                logData.forEach(row => {
-                    let dStr = row['Data Criação'] || row['Data'] || "";
-                    let iDate = new Date(dStr);
-                    // Fallback para timestamp
-                    if(isNaN(iDate.getTime()) && !isNaN(dStr)) iDate = new Date(parseInt(dStr));
+            metasData.forEach(meta => {
+                const c = (meta['Nome do Cliente']||"").trim();
+                if(!c || (search && !c.toLowerCase().includes(search))) return;
+                hasData = true; kT++;
+                const mS = parseInt(meta['Meta Social Media'])||0, mP = parseInt(meta['Meta Performance'])||0;
+                const st = currentMonthStats[c] || { social: 0, perf: 0 };
+                const gS = mS - st.social, gP = mP - st.perf;
+                kSD+=st.social; kSM+=mS; kPD+=st.perf; kPM+=mP;
+                if((gS>0 && mS>0) || (gP>0 && mP>0)) kR++;
 
-                    if(!isNaN(iDate.getTime())) {
-                        // Verifica Mês e Ano (UTC Safe)
-                        if(iDate.getMonth() === tM && iDate.getFullYear() === tY) {
-                            const c = (row['Nome do Cliente']||"").trim();
-                            const t = (row['Tipo de Entrega']||"").trim();
-                            const q = parseInt(row['Qtd'])||1;
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-50 group";
+                tr.innerHTML = `
+                    <td class="p-4 pl-6 sticky left-0 bg-white group-hover:bg-slate-50 z-20 font-medium text-slate-700 flex items-center gap-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] border-r border-slate-100">
+                        <span class="w-2.5 h-2.5 rounded-full ${((gS>0 && mS>0) || (gP>0 && mP>0)) ? 'bg-red-500 animate-pulse' : 'bg-green-500'}"></span>
+                        <span class="truncate max-w-[180px]" title="${c}">${c}</span>
+                    </td>
+                    <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mS}</td>
+                    <td class="p-2 text-center px-4">${renderBar(st.social, mS, gS)}</td>
+                    <td class="p-2 text-center font-bold ${gS>0?'text-red-500':'text-emerald-500'}">${gS>0?'-'+gS:'<i class="fa-solid fa-check"></i>'}</td>
+                    <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mP}</td>
+                    <td class="p-2 text-center px-4">${renderBar(st.perf, mP, gP)}</td>
+                    <td class="p-2 text-center font-bold ${gP>0?'text-red-500':'text-emerald-500'}">${gP>0?'-'+gP:'<i class="fa-solid fa-check"></i>'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-                            if(!currentMonthStats[c]) currentMonthStats[c] = { social: 0, perf: 0 };
-                            if(t.toLowerCase().includes('social')) currentMonthStats[c].social += q;
-                            else if(t.toLowerCase().includes('performance')) currentMonthStats[c].perf += q;
-                        }
-                    }
-                });
-
-                const search = document.getElementById('searchInput').value.toLowerCase();
-                let kT=0, kR=0, kSD=0, kSM=0, kPD=0, kPM=0, hasData=false;
-
-                metasData.forEach(meta => {
-                    const c = (meta['Nome do Cliente']||"").trim();
-                    if(!c || (search && !c.toLowerCase().includes(search))) return;
-                    hasData = true; kT++;
-                    
-                    // Parse seguro de inteiros
-                    const mS = parseInt(meta['Meta Social Media'])||0;
-                    const mP = parseInt(meta['Meta Performance'])||0;
-                    
-                    const st = currentMonthStats[c] || { social: 0, perf: 0 };
-                    const gS = mS - st.social;
-                    const gP = mP - st.perf;
-
-                    kSD+=st.social; kSM+=mS; kPD+=st.perf; kPM+=mP;
-                    if((gS>0 && mS>0) || (gP>0 && mP>0)) kR++;
-
-                    const tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 transition-colors border-b border-slate-50 group";
-                    tr.innerHTML = `
-                        <td class="p-4 pl-6 sticky left-0 bg-white group-hover:bg-slate-50 z-20 font-medium text-slate-700 flex items-center gap-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)] border-r border-slate-100">
-                            <span class="w-2.5 h-2.5 rounded-full ${((gS>0 && mS>0) || (gP>0 && mP>0)) ? 'bg-red-500 animate-pulse' : 'bg-green-500'}"></span>
-                            <span class="truncate max-w-[180px]" title="${c}">${c}</span>
-                        </td>
-                        <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mS}</td>
-                        <td class="p-2 text-center px-4">${renderBar(st.social, mS, gS)}</td>
-                        <td class="p-2 text-center font-bold ${gS>0?'text-red-500':'text-emerald-500'}">${gS>0?'-'+gS:'<i class="fa-solid fa-check"></i>'}</td>
-                        <td class="p-2 text-center text-slate-400 text-xs border-l border-slate-100 font-mono">${mP}</td>
-                        <td class="p-2 text-center px-4">${renderBar(st.perf, mP, gP)}</td>
-                        <td class="p-2 text-center font-bold ${gP>0?'text-red-500':'text-emerald-500'}">${gP>0?'-'+gP:'<i class="fa-solid fa-check"></i>'}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-
-                document.getElementById('kpiTotalClients').innerText = kT; document.getElementById('kpiRisk').innerText = kR;
-                document.getElementById('kpiSocialDone').innerText = kSD; document.getElementById('kpiSocialMeta').innerText = kSM;
-                document.getElementById('kpiPerfDone').innerText = kPD; document.getElementById('kpiPerfMeta').innerText = kPM;
-                document.getElementById('emptyState').className = hasData ? 'hidden' : 'absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/80 z-0';
-            
-            } catch (e) {
-                console.error(e);
-                showError("Erro ao renderizar dados: " + e.message);
-            }
+            document.getElementById('kpiTotalClients').innerText = kT; document.getElementById('kpiRisk').innerText = kR;
+            document.getElementById('kpiSocialDone').innerText = kSD; document.getElementById('kpiSocialMeta').innerText = kSM;
+            document.getElementById('kpiPerfDone').innerText = kPD; document.getElementById('kpiPerfMeta').innerText = kPM;
+            document.getElementById('emptyState').className = hasData ? 'hidden' : 'absolute inset-0 flex flex-col items-center justify-center text-slate-400 bg-white/80 z-0';
         }
 
         function renderBar(val, max, gap) {
